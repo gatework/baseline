@@ -1,0 +1,23 @@
+# NX-OS best-practice text rules; see vendors/comware/rules.yml.
+default:
+  rules:
+    - id: password_strength
+      title: 不得关闭密码强度检查
+      forbid: ['^no password strength-check$']
+      severity: medium
+    - id: bash_shell
+      title: 关闭 bash-shell 特性
+      forbid: ['^feature bash-shell$']
+      severity: low
+    - id: banner
+      title: 配置登录告警横幅
+      require: ['^banner motd\b']
+      severity: info
+    - id: copp
+      title: 启用 CoPP 控制面保护
+      require: ['^copp profile\b']
+      severity: low
+    - id: domain_lookup
+      title: 关闭 DNS 域名解析查询
+      forbid: ['^ip domain-lookup$']
+      severity: info

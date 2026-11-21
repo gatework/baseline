@@ -1,0 +1,103 @@
+dis cur
+#
+ version 7.1.070, Release 6351P06
+#
+ sysname LAB1-10-SW01
+#
+ clock timezone BJ add 08:00:00
+ clock protocol ntp
+#
+ telnet server enable
+#
+ password-recovery enable
+#
+ lldp global enable
+#
+ dot1x
+ dot1x authentication-method eap
+ mac-authentication
+#
+interface GigabitEthernet1/0/1
+ port access vlan 20
+ stp edged-port
+ dot1x
+ dot1x mandatory-domain lab
+#
+interface GigabitEthernet1/0/2
+ port access vlan 1
+#
+interface GigabitEthernet1/0/48
+ port link-type trunk
+ port trunk permit vlan all
+#
+ info-center loghost source Vlan-interface20
+ info-center loghost 198.51.100.21 port 5141
+ info-center loghost 198.51.100.20
+#
+ snmp-agent
+ snmp-agent community read public
+ snmp-agent community read simple ops acl 2000
+ snmp-agent sys-info version v2c v3
+ snmp-agent target-host trap address udp-domain 198.51.100.30 params securityname ops v2c
+#
+ ssh server enable
+#
+ ntp-service enable
+ ntp-service source Vlan-interface20
+ ntp-service unicast-server 198.51.100.11
+ ntp-service unicast-server 198.51.100.10
+#
+acl basic 2000
+ rule 0 permit source 198.51.100.0 0.0.0.255
+#
+hwtacacs scheme tac
+ primary authentication 198.51.100.1
+ primary authorization 198.51.100.1
+ primary accounting 198.51.100.1
+ secondary authentication 198.51.100.2
+ secondary authorization 198.51.100.2
+ secondary accounting 198.51.100.2
+ key authentication cipher $c$3$EXAMPLEONLY==
+ key authorization cipher $c$3$EXAMPLEONLY==
+ key accounting cipher $c$3$EXAMPLEONLY==
+#
+radius scheme rad
+ secondary authentication 198.51.100.5
+#
+domain ops
+ authentication login hwtacacs-scheme tac local
+ authorization login hwtacacs-scheme tac local
+ authorization command hwtacacs-scheme tac local
+ accounting login hwtacacs-scheme tac local
+ accounting command hwtacacs-scheme tac
+#
+ domain default enable ops
+#
+local-user admin class manage
+ password hash $h$6$EXAMPLEONLY
+ service-type ssh terminal
+ authorization-attribute user-role network-admin
+#
+local-user test class manage
+ service-type telnet
+#
+local-user portal class network
+ password cipher $c$3$EXAMPLEONLY
+#
+line class aux
+ user-role network-admin
+#
+line aux 0
+ user-role network-admin
+#
+line vty 0 4
+ authentication-mode scheme
+ protocol inbound ssh
+ command authorization
+ idle-timeout 30 0
+#
+line vty 5 63
+ user-role network-operator
+#
+return
+<LAB1-10-SW01>

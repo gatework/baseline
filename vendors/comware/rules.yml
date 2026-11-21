@@ -1,0 +1,35 @@
+# Comware best-practice text rules, checked by netops baseline.Rule:
+# within each block whose path matches section, every require pattern must
+# match a command and no forbid pattern may match one. Facets of the
+# management-plane model (AAA, NTP, syslog, SNMP, lines, services,
+# accounts, 802.1X) are checked semantically and are not repeated here.
+default:
+  rules:
+    - id: password_recovery
+      title: 关闭 password-recovery（防止 Console 绕过密码）
+      forbid: ['^password-recovery enable$']
+      severity: medium
+    - id: password_control
+      title: 启用 password-control（复杂度与锁定）
+      require: ['^password-control enable$']
+      severity: low
+    - id: lldp
+      title: 启用 LLDP
+      require: ['^lldp global enable$']
+      severity: info
+    - id: stp
+      title: 二层设备启用 STP
+      require: ['^stp global enable$']
+      severity: low
+    - id: dhcp_snooping
+      title: 接入设备启用 DHCP Snooping
+      require: ['^dhcp snooping enable$']
+      severity: low
+    - id: banner
+      title: 配置登录告警横幅
+      require: ['^header (login|motd|shell)\b']
+      severity: info
+    - id: ssh_acl_deny_log
+      title: 记录 SSH ACL 拒绝日志
+      require: ['^ssh server acl-deny-log enable$']
+      severity: info
