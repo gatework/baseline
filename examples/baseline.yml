@@ -1,0 +1,37 @@
+# baseline.yml — put it at ~/.gatework/baseline.yml (or ./baseline.yml, or
+# name it with $BASELINE_CONFIG / -c). Relative paths resolve against this
+# file; "~" is the home directory.
+source: ../testdata/backup   # backup directory: plan.json + <name>-<ip>.txt
+# The policy: a path, as here, or the policy document itself inline:
+#   policy:
+#     layers:
+#       - name: default
+#         checks: {...}
+policy: policy.yml
+
+# Hostname convention "<REGION><campus>-[<area>-]<ROLE><seq>", e.g.
+# LAB1-10-SW01, LAB2-LEF01. Named groups region/campus/area/role are
+# recognized; any other named group becomes a device label.
+naming:
+  pattern: '^(?P<region>[A-Za-z]{3})(?P<campus>\d+)?(?:-(?P<area>.+?))?-(?P<role>[A-Za-z]+?)(?P<seq>\d*)$'
+  roles:
+    sw: access
+    psw: access
+    asw: aggregation
+    csw: core
+    lef: leaf
+    spn: spine
+    bdr: border
+    fw: firewall
+    lb: loadbalancer
+    wlc: wlc
+    ac: wlc
+    r: router
+
+# Inventory vendor keys (net-connector platform names) to extractors; the
+# built-in aliases cover h3c, h3c_wireless, cisco_nxos, cisco_ios, centec,
+# hillstone, palo_alto and radware. Unknown keys fall back to detection.
+vendors:
+  hp_comware: comware
+
+workers: 8

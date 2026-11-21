@@ -1,0 +1,87 @@
+# Baseline policy: layers apply from general to specific; a later layer
+# overrides the enable state, severity and individual parameters an earlier
+# one set. Scopes use the netops device selector syntax plus region=X:
+#   name glob (LAB1-*), IP, prefix, site=, role=, vendor=, model=, label:k=
+# `baseline checks` lists every check; `baseline explain CHECK --device D`
+# shows what applies to one device. Start from `baseline survey`, which
+# drafts these expectations from what the fleet already agrees on.
+#
+# Addresses below are documentation placeholders (RFC 5737).
+
+vars:
+  # Lookups pick a value by a device variable: here syslog servers by region.
+  syslog:
+    by: region
+    values:
+      lab: [192.0.2.151, 192.0.2.104]
+      tst: [198.51.100.153, 198.51.100.190, 192.0.2.151, 192.0.2.104]
+    default: [192.0.2.151]
+
+layers:
+  - name: default
+    checks:
+      # Primary/secondary order matters: strict compares the order too.
+      aaa.servers: {params: {servers: [192.0.2.16, 192.0.2.118], order: strict}}
+      aaa.login_remote: {params: {protocol: tacacs}}
+      ntp.servers: {params: {servers: [192.0.2.18, 192.0.2.19], order: strict}}
+      logging.hosts: {params: {servers: "${syslog}", order: any}}
+      clock.timezone: {params: {offset: "+08:00"}}
+      # The 802.1X domain is the region name (lab, tst).
+      nac.domain: {params: {domain: "${region}"}}
+      nac.ports: {params: {exempt_descriptions: ["*AP*", "*uplink*", "*printer*"]}}
+      account.forbidden: {params: {names: [h3c, test*, guest, cisco, huawei]}}
+      line.idle_timeout: {params: {max_minutes: 15}}
+    disable:
+      - snmp.v3_only      # Example exception for a legacy rollout
+      - ntp.auth
+      - text.*.banner     # Example policy does not require a banner
+
+  - name: datacenter
+    scope: ["role=leaf", "role=spine", "role=border"]
+    disable: ["nac.*", "iface.vlan1"]
+
+  - name: distribution
+    scope: ["role=core", "role=aggregation", "role=router"]
+    disable: ["nac.ports", "nac.dot1x", "iface.edge", "iface.vlan1"]
+
+  - name: wireless-controllers
+    scope: ["role=wlc"]
+    disable: ["nac.*", "iface.*", "text.comware.stp", "text.comware.dhcp_snooping"]
+
+  - name: appliances
+    # Firewalls and load balancers authorize and account commands their own
+    # way; line, 802.1X and interface checks are already unsupported there.
+    scope: ["vendor=hillstone", "vendor=palo_alto", "vendor=radware"]
+    disable: ["aaa.command_authorization", "aaa.accounting", "snmp.trap_hosts"]
+    checks:
+      ntp.servers: {params: {order: primary}}
+
+  - name: test-site
+    # A site with its own NTP pair.
+    scope: ["site=TST9"]
+    checks:
+      ntp.servers: {params: {servers: [203.0.113.243, 203.0.113.140]}}
+
+  - name: labs
+    scope: ["*LAB*"]
+    checks:
+      service.telnet: {severity: low}
+
+waivers:
+  # Accepted risk: findings stay in the report, marked waived, until expiry.
+  - id: W-2026-001
+    scope: ["TST8-FW*"]
+    checks: ["ntp.servers"]
+    reason: 示例设备暂用备用 NTP 服务
+    owner: netops
+    expires: 2027-03-31
+
+# Custom text rules, checked like the built-in vendor best practices:
+# require/forbid regular expressions within blocks matching section.
+text_rules:
+  - dialect: comware
+    rules:
+      - id: info_center_timestamp
+        title: 日志时间戳带年份
+        forbid: ['^info-center timestamp loghost no-year-date$']
+        severity: info

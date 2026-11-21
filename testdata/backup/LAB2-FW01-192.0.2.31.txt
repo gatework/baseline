@@ -1,0 +1,15 @@
+set deviceconfig system hostname LAB2-FW01
+set deviceconfig system timezone Asia/Shanghai
+set deviceconfig system authentication-profile TACACS
+set deviceconfig system service disable-telnet yes
+set deviceconfig system service disable-http no
+set deviceconfig system ntp-servers primary-ntp-server ntp-server-address 198.51.100.10
+set deviceconfig system ntp-servers secondary-ntp-server ntp-server-address 198.51.100.11
+set deviceconfig system snmp-setting access-setting version v2c snmp-community-string private
+set deviceconfig system permitted-ip 198.51.100.0/24
+set shared server-profile tacplus AAA server one address 198.51.100.1
+set shared server-profile tacplus AAA server one secret -EXAMPLEONLY
+set shared authentication-profile TACACS method tacplus server-profile AAA
+set shared log-settings syslog OPS server ops server 198.51.100.20
+set mgt-config users admin phash $5$EXAMPLEONLY
+set mgt-config users admin permissions role-based superuser yes

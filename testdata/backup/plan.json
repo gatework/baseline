@@ -1,0 +1,6 @@
+{"selected": [
+ {"host": "192.0.2.11", "name": "LAB1-10-SW01", "vendor": "h3c", "backup_filename": "LAB1-10-SW01-192.0.2.11.txt"},
+ {"host": "192.0.2.21", "name": "LAB2-LEF01", "vendor": "cisco_nxos", "backup_filename": "LAB2-LEF01-192.0.2.21.txt"},
+ {"host": "192.0.2.31", "name": "LAB2-FW01", "vendor": "palo_alto", "backup_filename": "LAB2-FW01-192.0.2.31.txt"},
+ {"host": "192.0.2.99", "name": "LAB9-GONE", "vendor": "h3c", "backup_filename": "missing.txt"}
+]}

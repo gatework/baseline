@@ -1,0 +1,71 @@
+# Package layering (STANDARD.md ARC-1), checked by archcheck in `make check`.
+# Direction: cmd -> internal/cli -> internal/bootstrap -> internal/workflow
+# -> domain (root model, check, policy, survey, report) <- vendors.
+declared:
+  - .
+  - ./check
+  - ./policy
+  - ./survey
+  - ./report
+  - ./vendors
+  - ./vendors/comware
+  - ./vendors/nxos
+  - ./vendors/ios
+  - ./vendors/hillstone
+  - ./vendors/panos
+  - ./vendors/alteon
+  - ./internal/token
+  - ./internal/tz
+  - ./internal/mgmt
+  - ./internal/inventory
+  - ./internal/source
+  - ./internal/workflow
+  - ./internal/bootstrap
+  - ./internal/cli
+  - ./cmd/baseline
+
+rules:
+  - name: the root model depends only on netops value packages
+    packages: [.]
+    deny: [./..., github.com/gatework/netops/ops/..., github.com/gatework/netops/store/...,
+           github.com/gatework/netops/inventory/..., github.com/gatework/netops/bootstrap/...]
+
+  - name: domain packages do no I/O
+    packages: [., ./check/..., ./policy/..., ./survey/..., ./report/..., ./vendors/..., ./internal/token/...,
+               ./internal/tz/..., ./internal/mgmt/..., ./internal/inventory/..., ./internal/workflow/...]
+    deny: [os, os/exec, io/fs, net, net/http/..., database/sql/..., path/filepath, syscall]
+
+  - name: checks read the model only, never vendor syntax
+    packages: [./check/...]
+    only_local: [., ./internal/tz]
+
+  - name: the policy knows checks by ID only
+    packages: [./policy/...]
+    deny: [./...]
+
+  - name: survey reads the model only
+    packages: [./survey/...]
+    only_local: [., ./internal/tz]
+
+  - name: report is a pure result model
+    packages: [./report/...]
+    deny: [./...]
+
+  - name: vendors decode syntax into the model and do not know each other
+    packages: [./vendors/comware/..., ./vendors/nxos/..., ./vendors/ios/..., ./vendors/hillstone/...,
+               ./vendors/panos/..., ./vendors/alteon/...]
+    only_local: [., ./internal/token, ./internal/tz, ./internal/mgmt]
+
+  - name: workflows use injected ports, not adapters or vendors
+    packages: [./internal/workflow/...]
+    only_local: [., ./policy, ./report]
+
+  - name: the command line does not reach adapters directly
+    packages: [./internal/cli/...]
+    deny: [./internal/source/..., ./vendors/...]
+
+  - name: no transport, no retired kernels
+    packages: [./...]
+    deny: [github.com/gatework/net-connector/..., github.com/gatework/go-expect/..., github.com/gatework/expect/...,
+           github.com/gatework/go-netops/..., github.com/gatework/parser/...]
+    transitive: true
